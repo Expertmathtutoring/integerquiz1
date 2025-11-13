@@ -37,8 +37,14 @@
   }
   #question {
     font-size: 24px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     font-weight: bold;
+  }
+  #hint {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 15px;
+    font-style: italic;
   }
   input {
     font-size: 18px;
@@ -110,6 +116,8 @@
   </div>
 
   <div id="question"></div>
+  <div id="hint"></div>
+
   <input type="text" id="answer" placeholder="Your answer">
   <div>
     <button id="submit">Submit</button>
@@ -125,6 +133,7 @@
 
 <script>
 const questionEl = document.getElementById("question");
+const hintEl = document.getElementById("hint");
 const answerEl = document.getElementById("answer");
 const messageEl = document.getElementById("message");
 const scoreboardEl = document.getElementById("scoreboard");
@@ -144,7 +153,7 @@ const totalQuestions = 50;
 let timerInterval;
 let seconds = 0;
 
-// Start the timer
+// Start timer
 function startTimer() {
   clearInterval(timerInterval);
   seconds = 0;
@@ -161,22 +170,35 @@ function stopTimer() {
   clearInterval(timerInterval);
 }
 
-// Random integer generator
+// Random integer
 function randInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Create new integer operation question
+// Get hint based on operation
+function getHint(op) {
+  switch(op) {
+    case "+": return "Hint: Same signs → add. Different signs → subtract, keep the sign of the larger number.";
+    case "-": return "Hint: Subtracting a negative becomes addition.";
+    case "×": return "Hint: Same signs = positive. Different signs = negative.";
+    case "÷": return "Hint: Same signs = positive. Different signs = negative. Divide carefully.";
+    default: return "Hint: Think carefully about signs.";
+  }
+}
+
+// Generate question
 function generateQuestion() {
-  if (currentQuestion === 0) startTimer(); // Start timer only on first question
+  if (currentQuestion === 0) startTimer();
 
   const ops = ["+", "-", "×", "÷"];
   const op = selectedOp === "mixed" ? ops[randInt(0, 3)] : selectedOp;
+
   const a = randInt(-12, 12);
   let b = randInt(-12, 12);
   if (op === "÷") while (b === 0) b = randInt(-12, 12);
 
   const questionText = `${a} ${op} (${b})`;
+
   switch (op) {
     case "+": correctAnswer = a + b; break;
     case "-": correctAnswer = a - b; break;
@@ -185,6 +207,8 @@ function generateQuestion() {
   }
 
   questionEl.textContent = `Q${currentQuestion + 1}: ${questionText}`;
+  hintEl.textContent = getHint(op);
+
   answerEl.value = "";
   messageEl.textContent = "";
   scoreboardEl.textContent = `Score: ${score} / ${totalQuestions}`;
@@ -193,6 +217,7 @@ function generateQuestion() {
 // Check answer
 function checkAnswer() {
   const userAns = parseFloat(answerEl.value);
+
   if (isNaN(userAns)) {
     messageEl.textContent = "⚠️ Please enter a number.";
     messageEl.style.color = "black";
@@ -224,12 +249,12 @@ function checkAnswer() {
 function endGame() {
   stopTimer();
   questionEl.textContent = "🏁 Quiz Complete!";
-  messageEl.textContent = `Your final score: ${score} / ${totalQuestions}`;
-  submitBtn.style.display = "none";
-  restartBtn.style.display = "inline-block";
   const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
   const secs = String(seconds % 60).padStart(2, "0");
+  messageEl.textContent = `Your final score: ${score} / ${totalQuestions}`;
   timerEl.textContent = `🕒 Total Time: ${mins}:${secs}`;
+  submitBtn.style.display = "none";
+  restartBtn.style.display = "inline-block";
 }
 
 // Restart
@@ -253,6 +278,7 @@ tabs.forEach(tab => {
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
     selectedOp = tab.dataset.op;
+
     score = 0;
     currentQuestion = 0;
     startTimer();
@@ -260,11 +286,13 @@ tabs.forEach(tab => {
   });
 });
 
-// Button click submit
+// Submit button
 submitBtn.addEventListener("click", checkAnswer);
 
-// Start quiz
+// Start game
 generateQuestion();
+
 </script>
 </body>
 </html>
+
