@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🧮 Integer Operations Quiz Game</title>
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+    background: linear-gradient(135deg, #bbdefb, #e3f2fd);
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .container {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    padding: 30px;
+    width: 420px;
+  }
+  h1 { color: #1565c0; margin-bottom: 15px; }
+  #timer {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: #e3f2fd;
+    color: #0d47a1;
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  #question {
+    font-size: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+  input {
+    font-size: 18px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid #1565c0;
+    width: 150px;
+    text-align: center;
+  }
+  button {
+    background: #1565c0;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 16px;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+  button:hover { background: #0d47a1; }
+  #message {
+    margin-top: 15px;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  #scoreboard {
+    margin-top: 10px;
+    font-weight: bold;
+    color: #2e7d32;
+  }
+  #restart {
+    display: none;
+    background: #f57c00;
+    margin-top: 15px;
+  }
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    background: #90caf9;
+    color: #0d47a1;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .tab.active {
+    background: #1565c0;
+    color: white;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div id="timer">⏱️ 00:00</div>
+  <h1>🧮 Integer Operations Quiz</h1>
+  
+  <div class="tabs">
+    <button class="tab active" data-op="mixed">Mixed</button>
+    <button class="tab" data-op="+">Addition</button>
+    <button class="tab" data-op="-">Subtraction</button>
+    <button class="tab" data-op="×">Multiplication</button>
+    <button class="tab" data-op="÷">Division</button>
+  </div>
+
+  <div id="question"></div>
+  <input type="text" id="answer" placeholder="Your answer">
+  <div>
+    <button id="submit">Submit</button>
+    <button id="restart">Restart</button>
+  </div>
+  <div id="message"></div>
+  <div id="scoreboard"></div>
+</div>
+
+<!-- Confetti + applause -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<audio id="clapSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_3b1f4d033d.mp3?filename=clapping-44774.mp3"></audio>
+
+<script>
+const questionEl = document.getElementById("question");
+const answerEl = document.getElementById("answer");
+const messageEl = document.getElementById("message");
+const scoreboardEl = document.getElementById("scoreboard");
+const submitBtn = document.getElementById("submit");
+const restartBtn = document.getElementById("restart");
+const clapSound = document.getElementById("clapSound");
+const tabs = document.querySelectorAll(".tab");
+const timerEl = document.getElementById("timer");
+
+let currentQuestion = 0;
+let score = 0;
+let correctAnswer = 0;
+let selectedOp = "mixed";
+const totalQuestions = 50;
+
+// Timer variables
+let timerInterval;
+let seconds = 0;
+
+// Start the timer
+function startTimer() {
+  clearInterval(timerInterval);
+  seconds = 0;
+  timerInterval = setInterval(() => {
+    seconds++;
+    const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+    const secs = String(seconds % 60).padStart(2, "0");
+    timerEl.textContent = `⏱️ ${mins}:${secs}`;
+  }, 1000);
+}
+
+// Stop timer
+function stopTimer() {
+  clearInterval(timerInterval);
+}
+
+// Random integer generator
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Create new integer operation question
+function generateQuestion() {
+  if (currentQuestion === 0) startTimer(); // Start timer only on first question
+
+  const ops = ["+", "-", "×", "÷"];
+  const op = selectedOp === "mixed" ? ops[randInt(0, 3)] : selectedOp;
+  const a = randInt(-12, 12);
+  let b = randInt(-12, 12);
+  if (op === "÷") while (b === 0) b = randInt(-12, 12);
+
+  const questionText = `${a} ${op} (${b})`;
+  switch (op) {
+    case "+": correctAnswer = a + b; break;
+    case "-": correctAnswer = a - b; break;
+    case "×": correctAnswer = a * b; break;
+    case "÷": correctAnswer = parseFloat((a / b).toFixed(2)); break;
+  }
+
+  questionEl.textContent = `Q${currentQuestion + 1}: ${questionText}`;
+  answerEl.value = "";
+  messageEl.textContent = "";
+  scoreboardEl.textContent = `Score: ${score} / ${totalQuestions}`;
+}
+
+// Check answer
+function checkAnswer() {
+  const userAns = parseFloat(answerEl.value);
+  if (isNaN(userAns)) {
+    messageEl.textContent = "⚠️ Please enter a number.";
+    messageEl.style.color = "black";
+    return;
+  }
+
+  if (userAns === correctAnswer) {
+    score++;
+    messageEl.textContent = "🎉 Correct!";
+    messageEl.style.color = "green";
+    clapSound.play();
+    confetti({ particleCount: 100, spread: 100, origin: { y: 0.6 } });
+  } else {
+    messageEl.textContent = `❌ Incorrect. Correct answer: ${correctAnswer}`;
+    messageEl.style.color = "red";
+  }
+
+  currentQuestion++;
+  scoreboardEl.textContent = `Score: ${score} / ${totalQuestions}`;
+
+  if (currentQuestion < totalQuestions) {
+    setTimeout(generateQuestion, 1000);
+  } else {
+    endGame();
+  }
+}
+
+// End game
+function endGame() {
+  stopTimer();
+  questionEl.textContent = "🏁 Quiz Complete!";
+  messageEl.textContent = `Your final score: ${score} / ${totalQuestions}`;
+  submitBtn.style.display = "none";
+  restartBtn.style.display = "inline-block";
+  const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
+  const secs = String(seconds % 60).padStart(2, "0");
+  timerEl.textContent = `🕒 Total Time: ${mins}:${secs}`;
+}
+
+// Restart
+restartBtn.addEventListener("click", () => {
+  score = 0;
+  currentQuestion = 0;
+  submitBtn.style.display = "inline-block";
+  restartBtn.style.display = "none";
+  startTimer();
+  generateQuestion();
+});
+
+// Enter key submits
+answerEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") checkAnswer();
+});
+
+// Change operation tab
+tabs.forEach(tab => {
+  tab.addEventListener("click", () => {
+    tabs.forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    selectedOp = tab.dataset.op;
+    score = 0;
+    currentQuestion = 0;
+    startTimer();
+    generateQuestion();
+  });
+});
+
+// Button click submit
+submitBtn.addEventListener("click", checkAnswer);
+
+// Start quiz
+generateQuestion();
+</script>
+</body>
+</html>
