@@ -35,71 +35,17 @@
     font-weight: bold;
     font-size: 14px;
   }
-  #question {
-    font-size: 24px;
-    margin-bottom: 10px;
-    font-weight: bold;
-  }
-  #hint {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 15px;
-    font-style: italic;
-  }
-  input {
-    font-size: 18px;
-    padding: 10px;
-    border-radius: 8px;
-    border: 2px solid #1565c0;
-    width: 150px;
-    text-align: center;
-  }
-  button {
-    background: #1565c0;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-size: 16px;
-    margin-top: 10px;
-    cursor: pointer;
-  }
+  #question { font-size: 24px; margin-bottom: 10px; font-weight: bold; }
+  #hint { font-size: 14px; color: #555; margin-bottom: 15px; font-style: italic; }
+  input { font-size: 18px; padding: 10px; border-radius: 8px; border: 2px solid #1565c0; width: 150px; text-align: center; }
+  button { background: #1565c0; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 16px; margin-top: 10px; cursor: pointer; }
   button:hover { background: #0d47a1; }
-  #message {
-    margin-top: 15px;
-    font-size: 18px;
-    font-weight: bold;
-  }
-  #scoreboard {
-    margin-top: 10px;
-    font-weight: bold;
-    color: #2e7d32;
-  }
-  #restart {
-    display: none;
-    background: #f57c00;
-    margin-top: 15px;
-  }
-  .tabs {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-  }
-  .tab {
-    background: #90caf9;
-    color: #0d47a1;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  .tab.active {
-    background: #1565c0;
-    color: white;
-  }
+  #message { margin-top: 15px; font-size: 18px; font-weight: bold; }
+  #scoreboard { margin-top: 10px; font-weight: bold; color: #2e7d32; }
+  #restart { display: none; background: #f57c00; margin-top: 15px; }
+  .tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+  .tab { background: #90caf9; color: #0d47a1; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: bold; }
+  .tab.active { background: #1565c0; color: white; }
 </style>
 </head>
 <body>
@@ -118,7 +64,7 @@
   <div id="question"></div>
   <div id="hint"></div>
 
-  <input type="text" id="answer" placeholder="Your answer">
+  <input type="text" id="answer" placeholder="Your answer (e.g., 3/4 or 0.75)">
   <div>
     <button id="submit">Submit</button>
     <button id="restart">Restart</button>
@@ -148,12 +94,10 @@ let score = 0;
 let correctAnswer = 0;
 let selectedOp = "mixed";
 const totalQuestions = 50;
-
-// Timer variables
 let timerInterval;
 let seconds = 0;
 
-// Start timer
+// Timer
 function startTimer() {
   clearInterval(timerInterval);
   seconds = 0;
@@ -164,18 +108,12 @@ function startTimer() {
     timerEl.textContent = `⏱️ ${mins}:${secs}`;
   }, 1000);
 }
-
-// Stop timer
-function stopTimer() {
-  clearInterval(timerInterval);
-}
+function stopTimer() { clearInterval(timerInterval); }
 
 // Random integer
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
-// Get hint based on operation
+// Hint
 function getHint(op) {
   switch(op) {
     case "+": return "Hint: Same signs → add. Different signs → subtract, keep the sign of the larger number.";
@@ -183,6 +121,24 @@ function getHint(op) {
     case "×": return "Hint: Same signs = positive. Different signs = negative.";
     case "÷": return "Hint: Same signs = positive. Different signs = negative. Divide carefully.";
     default: return "Hint: Think carefully about signs.";
+  }
+}
+
+// Parse answer (fractions or decimals)
+function parseAnswer(input) {
+  input = input.trim();
+  if (input.includes("/")) {
+    const parts = input.split("/");
+    if (parts.length === 2) {
+      const num = parseFloat(parts[0]);
+      const denom = parseFloat(parts[1]);
+      if (!isNaN(num) && !isNaN(denom) && denom !== 0) {
+        return num / denom;
+      }
+    }
+    return NaN;
+  } else {
+    return parseFloat(input);
   }
 }
 
@@ -208,7 +164,6 @@ function generateQuestion() {
 
   questionEl.textContent = `Q${currentQuestion + 1}: ${questionText}`;
   hintEl.textContent = getHint(op);
-
   answerEl.value = "";
   messageEl.textContent = "";
   scoreboardEl.textContent = `Score: ${score} / ${totalQuestions}`;
@@ -216,15 +171,15 @@ function generateQuestion() {
 
 // Check answer
 function checkAnswer() {
-  const userAns = parseFloat(answerEl.value);
+  const userAns = parseAnswer(answerEl.value);
 
   if (isNaN(userAns)) {
-    messageEl.textContent = "⚠️ Please enter a number.";
+    messageEl.textContent = "⚠️ Please enter a valid number or fraction (e.g., 3/4).";
     messageEl.style.color = "black";
     return;
   }
 
-  if (userAns === correctAnswer) {
+  if (Math.abs(userAns - correctAnswer) < 0.01) {
     score++;
     messageEl.textContent = "🎉 Correct!";
     messageEl.style.color = "green";
@@ -267,18 +222,15 @@ restartBtn.addEventListener("click", () => {
   generateQuestion();
 });
 
-// Enter key submits
-answerEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") checkAnswer();
-});
+// Enter key
+answerEl.addEventListener("keydown", (e) => { if (e.key === "Enter") checkAnswer(); });
 
-// Change operation tab
+// Tabs
 tabs.forEach(tab => {
   tab.addEventListener("click", () => {
     tabs.forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
     selectedOp = tab.dataset.op;
-
     score = 0;
     currentQuestion = 0;
     startTimer();
@@ -291,8 +243,8 @@ submitBtn.addEventListener("click", checkAnswer);
 
 // Start game
 generateQuestion();
-
 </script>
 </body>
 </html>
+
 
